@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-2-#l#^1a3ck@3r023csrvutns_lh@l1-omxa)##aeyfhkmxxe2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['greengrocery.koyeb.app', 'localhost', '127.0.0.1']  # Added local hosts
 
 
 # Application definition
@@ -118,6 +118,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Added STATIC_ROOT for static file collection
 
 
 
