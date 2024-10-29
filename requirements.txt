@@ -10,8 +10,11 @@ packaging==24.1
 pillow==11.0.0
 razorpay==1.4.2
 requests==2.32.3
+scikit-learn==1.5.2
+scipy==1.14.1
 setuptools==75.2.0
 sqlparse==0.5.1
+threadpoolctl==3.5.0
 tzdata==2024.2
 urllib3==2.2.3
 whitenoise==6.7.0
