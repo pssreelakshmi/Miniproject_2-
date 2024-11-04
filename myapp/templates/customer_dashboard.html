@@ -97,8 +97,8 @@
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
                         <div class="dropdown-menu m-0">
-                            <a href="#" class="dropdown-item">Blog Grid</a>
-                            <a href="#" class="dropdown-item">Our Features</a>
+                            
+                            <li><a class="dropdown-item" href="{% url 'payment_list' %}">My Orders</a></li>
                             <a href="{% url 'price_chart_customer' %}" class="dropdown-item">View Price Charts</a>
                         </div>
                     </div>
@@ -112,7 +112,7 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
                             <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
-                            <li><a class="dropdown-item" href="{% url 'payment_list' %}">My Orders</a></li>
+                           <!-- <li><a class="dropdown-item" href="{% url 'payment_list' %}">My Orders</a></li>-->
                         </ul>
                     </div>
                     <a class="btn-sm-square bg-white rounded-circle ms-3" href="{% url 'view_cart' %}">

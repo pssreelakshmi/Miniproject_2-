@@ -1249,12 +1249,12 @@ def confirm_shipment(request, payment_id):
 #from myapp.models import Payment, Cart
 
 # Delete all entries from the Payment table
-Payment.objects.all().delete()
+#Payment.objects.all().delete()
 
 # Delete all entries from the Cart table
-Cart.objects.all().delete()
-OrderDetails.objects.all().delete()
-FarmerPayment.objects.all().delete()
+#Cart.objects.all().delete()
+#OrderDetails.objects.all().delete()
+#FarmerPayment.objects.all().delete()
 
 @login_required
 def success_view(request):
@@ -1460,7 +1460,7 @@ def quality_detect(request):
             return redirect('quality_detect')  # Redirect back to the quality detect page
 
         # Check if the image is a fruit or vegetable based on the file name
-        allowed_keywords = ['apple', 'banana', 'orange', 'grapes', 'carrot', 'tomato', 'potato', 'lettuce', 'cucumber', 'pepper']
+        allowed_keywords = ['apple', 'banana', 'orange', 'grapes', 'carrot', 'tomato', 'potato', 'lettuce', 'cucumber', 'pepper','gap','banana']
         if not any(keyword in image.name.lower() for keyword in allowed_keywords):
             messages.error(request, 'Please upload an image of a fruit or vegetable only.')
             return redirect('quality_detect')  # Redirect back to the quality detect page
