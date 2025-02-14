@@ -63,6 +63,15 @@
         }
        
     </style>
+     <script type="text/javascript">
+        function preventBack() {
+            window.history.forward();
+        }
+        setTimeout("preventBack()", 0);
+        window.onunload = function () {
+            null
+        };
+    </script>
 </head>
 <body>
     <div class="sidebar">
@@ -72,7 +81,7 @@
         <a href="{% url 'deliveryboy_orders' %}"><i class="fa fa-shopping-cart"></i> Orders</a>
         <a href="{% url 'deliveryboy_profile' %}"><i class="fa fa-cogs"></i> Profile</a>
         <a href="#"><i class="fa fa-cogs"></i> Settings</a>
-        <a href="#"><i class="fa fa-sign-out"></i> Logout</a>
+        <a href="{% url 'logout' %}"><i class="fa fa-sign-out"></i> Logout</a>
     </div>
     <div class="main-content">
         <div class="content">

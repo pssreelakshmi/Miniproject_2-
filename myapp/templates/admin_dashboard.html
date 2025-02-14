@@ -129,6 +129,11 @@
             margin-top: 20px;
             border-radius: 8px;
         }
+        .bg-light-rose {
+    background-color: #db6691; /* Light rose color */
+    color: white; /* Text color to ensure contrast */
+}
+
     </style>
     <script type="text/javascript">
         function preventBack() {
@@ -138,6 +143,7 @@
         window.onunload = function () {
             null
         };
+        
     </script>
 </head>
 
@@ -193,6 +199,7 @@
             </div>
         </div>
         <a href="{% url 'compare_prices' %}"><i class="fa fa-exchange"></i> Compare Prices</a>
+       <!-- <a href="{% url 'feedback_list' %}" class="btn btn-primary mt-3">Feedback & Ratings</a>-->
         <a href="{% url 'login' %}"><i class="fa fa-sign-out"></i> Logout</a>
     </div>
     <div class="content">
@@ -226,6 +233,7 @@
                     </div>
                 </div>
             </div>
+            
             <div class="col-md-4">
                 <div class="card text-white bg-info mb-3">
                     <div class="card-header">Products</div>
@@ -235,6 +243,21 @@
                     </div>
                 </div>
             </div>
+        
+            <!-- New Feedback Card -->
+            <div class="col-md-4">
+                <div class="card bg-light-rose mb-3">
+                    <div class="card-header">Feedback</div>
+                    <div class="card-body">
+                        <h5 class="card-title">Feedback</h5>
+                        <a href="{% url 'feedback_list' %}" class="btn btn-light">View</a>
+
+                    </div>
+                </div>
+            </div>
+            
+        
+            
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>

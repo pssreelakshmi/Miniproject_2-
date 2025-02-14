@@ -99,9 +99,6 @@ class Product(models.Model):
     def farmer_address(self):
         return self.farmer.user.address
 
-    
-
-    
 
 class Cart(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -171,7 +168,6 @@ class Payment(models.Model):
        order_id = models.CharField(max_length=100, unique=True)    # Order ID from the payment gateway
        status = models.CharField(max_length=20)  # e.g., 'Success', 'Failed'
        created_at = models.DateTimeField(auto_now_add=True)
-
        def __str__(self):
            return f"Payment {self.payment_id} by {self.user.email}"
        
@@ -224,3 +220,82 @@ class QualityResult(models.Model):
 
     def __str__(self):
         return self.status
+    
+
+class Feedback(models.Model):
+    payment = models.ForeignKey(Payment, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='feedbacks')
+    feedback_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Rating(models.Model):
+    payment = models.ForeignKey(Payment, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='ratings')
+    rating_value = models.IntegerField()  # Assuming a rating scale of 1-5
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class EdCat(models.Model):
+    catid = models.AutoField(primary_key=True)  # Automatically incrementing ID
+    catname = models.CharField(max_length=255)  # Category name
+
+    def __str__(self):
+        return self.catname  # Return the category name when the object is printed
+    
+class Material(models.Model):
+    material_id = models.AutoField(primary_key=True)  # Unique identifier (Primary Key)
+    title = models.CharField(max_length=255)  # Title of the material
+    description = models.TextField()  # Brief description
+    content = models.TextField()  # Full content or URL link
+    category = models.ForeignKey(EdCat, on_delete=models.CASCADE)  # Foreign Key to Category table
+    image = models.ImageField(upload_to='material_images/')  # Image field for the material
+    date_uploaded = models.DateTimeField(auto_now_add=True)  # Date uploaded (automatically set to current date/time)
+
+    def __str__(self):
+        return self.title  # Return the title of the material when printed
+    
+    
+    
+class SeasonalCategory(models.Model):
+    month_name = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return self.month_name
+    
+    
+    
+class SeasonalProduct(models.Model):
+    category = models.ForeignKey(SeasonalCategory, on_delete=models.CASCADE)
+    product_name = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='seasonal_products/', blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.product_name} ({self.category.name})"
+    
+    
+from django.db import models
+
+class Event(models.Model):
+    EVENT_MODE_CHOICES = [
+        ('Online', 'Online'),
+        ('Offline', 'Offline'),
+    ]
+
+    name = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='event_images/')  # Stores images in media/event_images
+    description = models.TextField()
+    registration_start_date = models.DateField()
+    registration_end_date = models.DateField()
+    event_date = models.DateField()
+    mode = models.CharField(max_length=10, choices=EVENT_MODE_CHOICES)
+
+    def __str__(self):
+        return self.name
+    
+class EventRegistration(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone = models.CharField(max_length=10)
