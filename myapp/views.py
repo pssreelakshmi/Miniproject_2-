@@ -1361,6 +1361,15 @@ def assign_delivery(request):
 
     return render(request, 'admin_payment_detail.html')
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
+from django.contrib.auth.decorators import login_required
+from .models import DeliveryAssignment, Payment
+
+
+
 @login_required
 def deliveryboy_orders(request):
     deliveryboy = request.user  # Assuming the delivery boy is the logged-in user
@@ -1368,13 +1377,13 @@ def deliveryboy_orders(request):
     # Fetch assignments that are not delivered
     assignments = DeliveryAssignment.objects.filter(
         delivery_boy=deliveryboy
-    ).exclude(status='Delivered').select_related('payment', 'payment__user').prefetch_related('payment__order_details__orderproduct_set__product')
+    ).exclude(status='Delivered').select_related('payment', 'payment__user')
 
     context = {
         'assignments': assignments,
         'delivery_boy_email': deliveryboy.email,  # Pass the delivery boy's email to the context
     }
-    
+
     return render(request, 'deliveryboy_orders.html', context)
 
 
@@ -1395,11 +1404,10 @@ def send_delivery_notification(delivery_boy, payment):
 def my_deliveries(request):
     # Fetch orders delivered by the current logged-in delivery boy
     user = request.user
-    delivery_boy = get_object_or_404(DeliveryBoy, user=user)
-    
     delivered_orders = DeliveryAssignment.objects.filter(delivery_boy=user, status='Delivered')
     
     return render(request, 'my_deliveries.html', {'delivered_orders': delivered_orders})
+
 
 @login_required
 def delete_order(request, order_id):
@@ -1407,7 +1415,8 @@ def delete_order(request, order_id):
         assignment = get_object_or_404(DeliveryAssignment, id=order_id)
         assignment.delete()
         return redirect('deliveryboy_orders')  # Redirect to the orders page
-    
+
+
 @login_required  
 def request_otp(request, order_id):
     if request.method == 'POST':
@@ -1425,7 +1434,9 @@ def request_otp(request, order_id):
         )
         return redirect('deliveryboy_orders')  # Redirect back to orders page
 
-# Function to confirm OTP
+
+
+@login_required
 def confirm_otp(request, order_id):
     if request.method == 'POST':
         entered_otp = request.POST.get('otp')
@@ -1439,7 +1450,7 @@ def confirm_otp(request, order_id):
             return redirect('deliveryboy_orders')  # Redirect back to orders page
         else:
             messages.error(request, 'Invalid OTP. Please try again.')  # Error message
-            return redirect('deliveryboy_orders')  
+            return redirect('deliveryboy_orders')
 
 def farmer_payment_details(request):
     if not request.user.is_authenticated:
@@ -1844,7 +1855,7 @@ def add_seasonal_category(request):
 
         # Case-insensitive and whitespace-insensitive duplicate check
         if SeasonalCategory.objects.filter(Q(month_name__iexact=month_name) | Q(month_name__icontains=month_name)).exists():
-            messages.error(request, "This month category already exists (case-insensitive).")
+            messages.error(request, "This month category already exists.")
             return render(request, 'seasonal_category.html')
 
         if not re.match("^[a-zA-Z ]+$", month_name):
@@ -2217,6 +2228,7 @@ def register_event(request, event_id):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
 
+
 def verify_otps(request):
     """Verifies the OTP and registers the user for the event."""
     if request.method == 'POST':
@@ -2232,12 +2244,13 @@ def verify_otps(request):
 
             try:
                 event = Event.objects.get(id=event_id)
-                # Save data to EventRegistration table
+                # Save data to EventRegistration table with status 'pending'
                 EventRegistration.objects.create(
                     event=event,
                     name=name,
                     email=email,
-                    phone=phone
+                    phone=phone,
+                    status='pending'  # Set status to 'pending'
                 )
 
                 # Send confirmation email
@@ -2267,18 +2280,421 @@ from django.http import JsonResponse
 from django.core.mail import send_mail
 
 def send_email(request):
+    """Handles sending emails and updating status to 'delivered'."""
     if request.method == 'POST':
         emails = request.POST.get('emails').split(',')
         link = request.POST.get('link')
         subject = request.POST.get('subject')
 
-        message = f"Hello,\n\nPlease find the link to the resource below:\n\n{link}\n\nBest regards,"
+        for email in emails:
+            # Send email
+            send_mail(
+                subject,
+                f'Here is the link for the event: {link}',
+                settings.EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
 
+            # Update status to 'delivered'
+            EventRegistration.objects.filter(email=email).update(status='delivered')
+
+        return JsonResponse({'status': 'success', 'message': 'Emails sent successfully.'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
+    
+    
+    
+    
+    
+# Delete all entries from the Payment table
+#Payment.objects.all().delete()
+
+# Delete all entries from the Cart table
+#Cart.objects.all().delete()
+#OrderDetails.objects.all().delete()
+#FarmerPayment.objects.all().delete()
+#Feedback.objects.all().delete()
+#Rating.objects.all().delete()
+#Rating.objects.all().delete()
+#EventRegistration.objects.all().delete()
+
+# Import the Plant model
+#from myapp.models import Plant
+
+# Delete all entries from the Plant model
+#Plant.objects.all().delete()
+
+
+from django.shortcuts import render
+
+def upload_image(request):
+    return render(request, 'upload_image.html')
+
+
+
+# views.py
+# views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import PlantDisease
+from django.shortcuts import render, redirect
+from .models import PlantDisease
+from django.core.exceptions import ValidationError
+import re
+
+def add_disease(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        image = request.FILES.get('image')
+        description = request.POST.get('description')
+        tips_to_control = request.POST.get('tips_to_control')  # New field
+
+        # Validate title: it should not contain numbers
+        if title and re.search(r'\d', title):  # Title contains numbers
+            return render(request, 'add_disease.html', {'error': 'Title should not contain numbers.'})
+        
+        # Validate image: should not be a PDF
+        if image:
+            allowed_image_types = ['image/jpeg', 'image/png', 'image/jpg']
+            if image.content_type not in allowed_image_types:
+                return render(request, 'add_disease.html', {'error': 'Please upload a valid image (JPG, PNG). PDF is not allowed.'})
+        
+        # If title, image, description, and tips_to_control are provided and valid
+        if title and image and description and tips_to_control:
+            PlantDisease.objects.create(
+                title=title,
+                image=image,
+                description=description,
+                tips_to_control=tips_to_control  # New field
+            )
+            return redirect('view_diseases')  # Redirect to the disease list page after saving
+
+        # If any field is missing or invalid
+        return render(request, 'add_disease.html', {'error': 'All fields are required.'})
+
+    return render(request, 'add_disease.html')  # Initial GET request rendering
+
+
+def view_diseases(request):
+    diseases = PlantDisease.objects.all()
+    return render(request, 'view_diseases.html', {'diseases': diseases})
+
+from django.core.exceptions import ValidationError
+
+def edit_disease(request, id):
+    disease = get_object_or_404(PlantDisease, id=id)
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        tips_to_control = request.POST.get('tips_to_control')  # New field
+        
+        # Validate title - Ensure no numbers in the title
+        if any(char.isdigit() for char in title):
+            return render(request, 'edit_disease.html', {
+                'disease': disease,
+                'error_message': 'Title should not contain numbers.'
+            })
+        
+        # Validate image type
+        if 'image' in request.FILES:
+            image = request.FILES['image']
+            if not image.content_type in ['image/jpeg', 'image/png', 'image/jpg']:
+                return render(request, 'edit_disease.html', {
+                    'disease': disease,
+                    'error_message': 'Please upload a valid image (JPG, PNG).'
+                })
+            disease.image = image
+        
+        # Update fields
+        disease.title = title
+        disease.description = description
+        disease.tips_to_control = tips_to_control  # New field
+        disease.save()
+        return redirect('view_diseases')
+    
+    return render(request, 'edit_disease.html', {'disease': disease})
+
+def delete_disease(request, id):
+    disease = get_object_or_404(PlantDisease, id=id)
+    if request.method == 'POST':
+        disease.delete()
+    return redirect('view_diseases')
+
+
+
+from django.shortcuts import render
+from .models import PlantDisease
+
+def farmer_disease(request):
+    # Fetch all PlantDisease records from the database
+    diseases = PlantDisease.objects.all()
+    
+    # Pass the data to the template
+    return render(request, 'farmer_disease.html', {'diseases': diseases})
+
+
+
+from django.shortcuts import render
+from django.core.files.storage import default_storage
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+import numpy as np
+
+# Load the trained model
+model = load_model('plant_disease_model.h5')
+
+# Define the class labels manually (replace with your actual class names)
+class_labels = [
+    'Apple___Apple_scab',
+    'Apple___Black_rot',
+    'Apple___Cedar_apple_rust',
+    'Apple___healthy',
+    'Blueberry___healthy',
+    'Cherry___Powdery_mildew',
+    'Cherry___healthy',
+    'Corn___Cercospora_leaf_spot',
+    'Corn___Common_rust',
+    'Corn___Northern_Leaf_Blight',
+    'Corn___healthy',
+    'Grape___Black_rot',
+    'Grape___Esca_(Black_Measles)',
+    'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)',
+    'Grape___healthy',
+    'Orange___Haunglongbing_(Citrus_greening)',
+    'Peach___Bacterial_spot',
+    'Peach___healthy',
+    'Pepper,_bell___Bacterial_spot',
+    'Pepper,_bell___healthy',
+    'Potato___Early_blight',
+    'Potato___Late_blight',
+    'Potato___healthy',
+    'Raspberry___healthy',
+    'Soybean___healthy',
+    'Squash___Powdery_mildew',
+    'Strawberry___Leaf_scorch',
+    'Strawberry___healthy',
+    'Tomato___Bacterial_spot',
+    'Tomato___Early_blight',
+    'Tomato___Late_blight',
+    'Tomato___Leaf_Mold',
+    'Tomato___Septoria_leaf_spot',
+    'Tomato___Spider_mites',
+    'Tomato___Target_Spot',
+    'Tomato___Tomato_Yellow_Leaf_Curl_Virus',
+    'Tomato___Tomato_mosaic_virus',
+    'Tomato___healthy',
+]
+
+def predict_disease(request):
+    if request.method == 'POST' and request.FILES['image']:
+        # Save the uploaded file
+        file = request.FILES['image']
+        file_name = default_storage.save(file.name, file)
+        file_url = default_storage.path(file_name)
+
+        # Load and preprocess the image
+        img = image.load_img(file_url, target_size=(224, 224))
+        img_array = image.img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array /= 255.0
+
+        # Make a prediction
+        predictions = model.predict(img_array)
+        predicted_class = class_labels[np.argmax(predictions)]
+
+        # Display the result
+        return render(request, 'result.html', {'disease': predicted_class})
+
+    return render(request, 'upload.html')
+
+
+# myapp/views.py
+
+# myapp/views.py
+
+from django.shortcuts import render
+from .models import Plant
+import pandas as pd  # Ensure this import is present
+
+def crop_prediction(request):
+    result = None
+    if request.method == "POST":
+        plant_name = request.POST.get("plant_name")
+
+        # Load the dataset from the database
+        plants = Plant.objects.filter(name__iexact=plant_name)  # Use filter instead of get
+
+        if plants.exists():
+            # If there are multiple plants, you can choose how to handle them
+            # For example, you can just take the first one or return a message
+            plant_data = plants.first()  # Get the first matching plant
+            result = {
+                "climate": plant_data.climate,
+                "soil_type": plant_data.soil_type,
+                "pesticide": plant_data.pesticide,
+                "pesticide_time": plant_data.pesticide_time,
+                "growth_duration": plant_data.growth_duration,
+                "fertilizers_used": plant_data.fertilizers_used,
+                "harvesting_season": plant_data.harvesting_season,
+            }
+        else:
+            result = "Plant not found in the dataset."
+
+    return render(request, "predicts.html", {"result": result})
+
+from django.shortcuts import render
+from django.http import HttpResponse
+from .models import Payment
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+
+def payment_table_view(request):
+    payments = Payment.objects.all()
+    return render(request, 'payment_table.html', {'payments': payments})
+
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from .models import Payment
+
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from .models import Payment
+
+def download_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="payments.pdf"'
+
+    # Create a PDF document
+    pdf = SimpleDocTemplate(response, pagesize=letter)
+    elements = []
+
+    # Add a title
+    styles = getSampleStyleSheet()
+    title = Paragraph("Payment Data Report", styles['Title'])
+    elements.append(title)
+    elements.append(Spacer(1, 12))  # Add space after the title
+
+    # Fetch all payment data
+    payments = Payment.objects.all()
+
+    # Create a list of lists for the table data
+    data = [['User Email', 'Products', 'Amount Paid', 'Payment ID', 'Order ID', 'Order Status', 'Created At']]
+    for payment in payments:
+        # Get product names
+        if payment.order_details:
+            product_names = ", ".join([str(product.product_name) for product in payment.order_details.products.all()])
+        else:
+            product_names = "No products"
+
+        # Get order status
+        order_status = payment.order_details.order_status if payment.order_details else "Unknown"
+
+        # Append the row to the data
+        data.append([
+            payment.user.email,
+            product_names,
+            f"Rs.{payment.amount_paid:.2f}",  # Format amount as currency
+            payment.payment_id,
+            payment.order_id,
+            order_status,
+            payment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        ])
+
+    # Create the table
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#007BFF')),  # Header row background (blue)
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),  # Header row text color
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Center align all cells
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Header row font
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),  # Header row padding
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),  # Table body background (light gray)
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#DDDDDD')),  # Add grid lines (light gray)
+        ('FONTSIZE', (0, 0), (-1, -1), 10),  # Set font size for all cells
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),  # Table body text color
+    ]))
+
+    elements.append(table)
+    pdf.build(elements)
+
+    return response
+
+
+from django.shortcuts import render, redirect
+from django.conf import settings
+from .models import PlantImage
+from django.core.files.storage import FileSystemStorage
+import os
+import joblib
+import pandas as pd
+import numpy as np
+from PIL import Image
+import io
+
+# Load models (this will be loaded once when the server starts)
+MODEL_PATH = os.path.join(settings.BASE_DIR, 'plant_models.joblib')
+models = joblib.load(MODEL_PATH)
+
+def extract_features(image):
+    """Simulate feature extraction from image (in a real app, use CNN)"""
+    # Convert image to numpy array
+    img = Image.open(image)
+    img = img.convert('RGB')
+    img = img.resize((224, 224))  # Standard size for feature extraction
+    
+    # In a real app, we would use a CNN to extract features here
+    # For simulation, we'll return random features matching our training data
+    np.random.seed(hash(img.tobytes()) % 2**32)  # Seed based on image content
+    return np.random.rand(20).tolist()
+
+def home(request):
+    return render(request, 'home.html')
+
+def predictedplant(request):  # Changed from predict(request)
+    if request.method == 'POST' and request.FILES['plant_image']:
+        # Save uploaded file
+        uploaded_file = request.FILES['plant_image']
+        fs = FileSystemStorage()
+        filename = fs.save(uploaded_file.name, uploaded_file)
+        file_url = fs.url(filename)
+        
+        # Create PlantImage record
+        plant_image = PlantImage(image=filename)
+        
         try:
-            send_mail(subject, message, 'your-email@gmail.com', emails, fail_silently=False)
-            return JsonResponse({'success': 'Emails sent successfully'})
+            # Extract features (simulated)
+            features = extract_features(uploaded_file)
+            feature_names = [f'feature_{i}' for i in range(20)]
+            features_df = pd.DataFrame([features], columns=feature_names)
+            
+            # Make predictions
+            plant_image.soil_type = models['soil_type'].predict(features_df)[0]
+            plant_image.climate = models['climate'].predict(features_df)[0]
+            plant_image.pesticide = models['pesticide'].predict(features_df)[0]
+            plant_image.application_period = models['application_period'].predict(features_df)[0]
+            
+            plant_image.save()
+            
+            context = {
+                'plant_image': plant_image,
+                'file_url': file_url,
+                'soil_type': plant_image.soil_type,
+                'climate': plant_image.climate,
+                'pesticide': plant_image.pesticide,
+                'application_period': plant_image.application_period,
+            }
+            
+            return render(request, 'predictingpage.html', context)
+        
         except Exception as e:
-            return JsonResponse({'error': f'Failed to send emails: {str(e)}'}, status=500)
-
-    else:
-        return JsonResponse({'error': 'Invalid request'}, status=400)
+            print(f"Error during prediction: {e}")
+            return render(request, 'predictingpage.html', {'error': str(e)})
+    
+    return redirect('home')

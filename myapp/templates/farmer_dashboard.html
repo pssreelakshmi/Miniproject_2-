@@ -115,9 +115,13 @@
         <a href="{% url 'add_product' %}"><i class="fas fa-plus"></i> Add Product</a>
         <a href="{% url 'list_products' %}"><i class="fas fa-list"></i> View Products</a>
         <a href="{% url 'farmer_payment_list' %}"><i class="fas fa-shopping-cart"></i> Orders</a>
-        <a href="{% url 'trends' %}"><i class="fas fa-comments"></i> Trends</a>
-        <a href="{% url 'farmer_event' %}"><i class="fas fa-comments"></i> Events</a>
-
+        <a href="{% url 'trends' %}"><i class="fas fa-chart-line"></i> Trends</a>
+        <a href="{% url 'home' %}" class="nav-link">
+            <i class="fas fa-home"></i> Plant Home
+          </a>
+        <a href="{% url 'farmer_event' %}"><i class="fas fa-calendar-alt"></i> Events</a>
+        <!-- <a href="{% url 'predicts' %}"><i class="fas fa-calendar-alt"></i> crop prediction</a>-->
+       
 
         <a href="{% url 'feedback_farm' %}"><i class="fas fa-comments"></i> Feedback</a>
         <a href="{% url 'farmmaterial_view' %}"><i class="fas fa-book"></i> Learning Materials</a>

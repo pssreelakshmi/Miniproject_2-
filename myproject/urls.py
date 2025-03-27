@@ -167,6 +167,23 @@ path('events/edit/<int:event_id>/', views.edit_event, name='edit_event'),
        path('verify-otp/', views.verify_otps, name='verify_otps'),  # Updated URL name
   path('events/<int:event_id>/registered/', views.view_registered_people, name='view_registered_people'),
   path('send_email/', views.send_email, name='send_email'),
+   
+     path('add_disease/', views.add_disease, name='add_disease'),
+    path('view_diseases/', views.view_diseases, name='view_diseases'),
+    path('edit_disease/<int:id>/', views.edit_disease, name='edit_disease'),
+    path('delete_disease/<int:id>/', views.delete_disease, name='delete_disease'),
+    path('farmer-disease/', views.farmer_disease, name='farmer_disease'),
+    path('predict/', views.predict_disease, name='predict_disease'),
+    path('upload/', views.predict_disease, name='upload'),  # Add this line
+    
+    
+     path('predicts/', views.crop_prediction, name='predicts'),
+      path('payment-table/', views.payment_table_view, name='payment_table'),
+    path('download-pdf/', views.download_pdf, name='download_pdf'),
+
+
+      path('home', views.home, name='home'),
+    path('predictplant/', views.predictedplant, name='predictedplant'), 
 ]
 
 

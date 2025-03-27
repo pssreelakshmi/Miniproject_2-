@@ -89,6 +89,7 @@ def run_tests():
         test_login(driver, "customer", "grocery18900@gmail.com", "Sree@123", "Customer Dashboard")
         test_login(driver, "farmer", "sreelakshmips2025@mca.ajce.in", "Farmer@123", "Farmer Dashboard")
         test_login(driver, "admin", "admin@gmail.com", "Admin@123", "Admin Dashboard")
+        test_login(driver, "education", "education@gmail.com", "Education@123", "Education Dashboard")
 
         # Perform an invalid login test
         test_invalid_login(driver)

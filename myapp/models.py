@@ -203,7 +203,7 @@ class DeliveryAssignment(models.Model):
             # Update related Payment and OrderDetails status
             self.payment.status = 'Delivered'
             self.payment.order_details.order_status = 'Delivered'
-            self.payment.payment_id = 'Delivered'  # Update payment status if needed
+            # Update payment status if needed
             self.payment.save()
             self.payment.order_details.save()
         super().save(*args, **kwargs)
@@ -233,27 +233,27 @@ class Rating(models.Model):
     payment = models.ForeignKey(Payment, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='ratings')
-    rating_value = models.IntegerField()  # Assuming a rating scale of 1-5
+    rating_value = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
 class EdCat(models.Model):
-    catid = models.AutoField(primary_key=True)  # Automatically incrementing ID
-    catname = models.CharField(max_length=255)  # Category name
+    catid = models.AutoField(primary_key=True)
+    catname = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.catname  # Return the category name when the object is printed
+        return self.catname
     
 class Material(models.Model):
-    material_id = models.AutoField(primary_key=True)  # Unique identifier (Primary Key)
-    title = models.CharField(max_length=255)  # Title of the material
-    description = models.TextField()  # Brief description
-    content = models.TextField()  # Full content or URL link
-    category = models.ForeignKey(EdCat, on_delete=models.CASCADE)  # Foreign Key to Category table
-    image = models.ImageField(upload_to='material_images/')  # Image field for the material
-    date_uploaded = models.DateTimeField(auto_now_add=True)  # Date uploaded (automatically set to current date/time)
+    material_id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    content = models.TextField()
+    category = models.ForeignKey(EdCat, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='material_images/')
+    date_uploaded = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.title  # Return the title of the material when printed
+        return self.title
     
     
     
@@ -295,7 +295,52 @@ class Event(models.Model):
         return self.name
     
 class EventRegistration(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('delivered', 'Delivered'),
+    ]
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     email = models.EmailField()
     phone = models.CharField(max_length=10)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+
+
+class PlantDisease(models.Model):
+    title = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='disease_images/')
+    description = models.TextField()
+    tips_to_control = models.TextField()  # New field
+
+    def __str__(self):
+        return self.title
+    
+    
+class Plant(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    climate = models.CharField(max_length=255)
+    soil_type = models.CharField(max_length=255)
+    pesticide = models.CharField(max_length=255)
+    pesticide_time = models.CharField(max_length=255)
+    growth_duration = models.CharField(max_length=255)  # New field
+    fertilizers_used = models.CharField(max_length=255)  # New field
+    harvesting_season = models.CharField(max_length=255)  # New field
+
+    def __str__(self):
+        return self.name
+
+
+from django.db import models
+
+class PlantImage(models.Model):
+    image = models.ImageField(upload_to='uploads/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    # Prediction fields
+    soil_type = models.CharField(max_length=50, blank=True)
+    climate = models.CharField(max_length=50, blank=True)
+    pesticide = models.CharField(max_length=100, blank=True)
+    application_period = models.CharField(max_length=50, blank=True)
+    
+    def __str__(self):
+        return f"Plant Image {self.id}"

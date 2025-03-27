@@ -234,15 +234,21 @@
                             <th><input type="checkbox" id="checkAll"></th>
                             <th>Name</th>
                             <th>Email</th>
+                            <th>Status</th> <!-- New column for status -->
                             <!-- Add other fields from your EventRegistration model -->
                         </tr>
                     </thead>
                     <tbody>
                         {% for registration in registrations %}
                             <tr>
-                                <td><input type="checkbox" name="selected-emails" value="{{ registration.email }}" {% if registration.email_sent %}disabled{% endif %}></td>
+                                <td><input type="checkbox" name="selected-emails" value="{{ registration.email }}" {% if registration.status == 'delivered' %}disabled{% endif %}></td>
                                 <td>{{ registration.name }}</td>
                                 <td>{{ registration.email }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ registration.status }}">
+                                        {{ registration.status }}
+                                    </span>
+                                </td> <!-- Display status with dynamic class -->
                                 <!-- Display other fields from your EventRegistration model -->
                             </tr>
                         {% endfor %}
@@ -287,6 +293,27 @@
             </div>
         </div>
     </div>
+
+    <style>
+        /* Add CSS for status badges */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .status-pending {
+            background-color: yellow;
+            color: black;
+        }
+
+        .status-delivered {
+            background-color: green;
+            color: white;
+        }
+    </style>
 
     <script>
         $(document).ready(function() {
@@ -353,4 +380,5 @@
         });
     </script>
 </body>
+
 </html>
